@@ -13,6 +13,7 @@
       :session-id="currentSessionId"
       :sidebar-open="sidebarOpen"
       :user="user"
+      :login-error="loginError"
       @toggle-sidebar="sidebarOpen = !sidebarOpen"
       @login="loginWithGoogle"
       @logout="logout"
@@ -30,6 +31,7 @@ const user = ref(null)
 const sessions = ref([])
 const currentSessionId = ref(null)
 const sidebarOpen = ref(true)
+const loginError = ref('')
 
 let authSubscription = null
 
@@ -96,13 +98,20 @@ function deleteSession(id) {
 }
 
 async function loginWithGoogle() {
-  if (!supabase) return
-  await supabase.auth.signInWithOAuth({
+  loginError.value = ''
+  if (!supabase) {
+    loginError.value = 'Supabase 未配置，请在 .env 中设置 VITE_SUPABASE_URL 和 VITE_SUPABASE_ANON_KEY'
+    return
+  }
+  const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
       redirectTo: window.location.origin
     }
   })
+  if (error) {
+    loginError.value = error.message
+  }
 }
 
 async function logout() {

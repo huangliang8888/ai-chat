@@ -307,6 +307,12 @@ html, body {
   border-color: #ef4444;
 }
 
+.login-error-msg {
+  font-size: 12px;
+  color: #ef4444;
+  max-width: 300px;
+}
+
 /* ===== Message List ===== */
 .message-list {
   flex: 1;

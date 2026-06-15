@@ -25,6 +25,7 @@
           </svg>
           登录
         </button>
+        <span v-if="loginError" class="login-error-msg">{{ loginError }}</span>
       </div>
     </header>
 
@@ -49,7 +50,8 @@ import { sendChatMessage, streamChatMessage } from '../services/api.js'
 const props = defineProps({
   sessionId: { type: String, default: null },
   sidebarOpen: { type: Boolean, default: true },
-  user: { type: Object, default: null }
+  user: { type: Object, default: null },
+  loginError: { type: String, default: '' }
 })
 
 defineEmits(['toggle-sidebar', 'login', 'logout'])
