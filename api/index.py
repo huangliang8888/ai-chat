@@ -31,7 +31,7 @@ app.add_middleware(
 )
 
 # Configurable model via environment variable
-AI_MODEL = os.environ.get("AI_MODEL", "qwen/qwen3-coder:free")
+AI_MODEL = os.environ.get("AI_MODEL", "openai/gpt-oss-120b:free")
 
 
 class ChatMessage(BaseModel):
@@ -122,6 +122,7 @@ async def call_openrouter_stream(messages: list[dict]):
                     "model": AI_MODEL,
                     "messages": messages,
                     "stream": True,
+                    "reasoning": {"enabled": True},
                 },
             ) as response:
                 if response.status_code != 200:
@@ -176,6 +177,7 @@ async def call_openrouter_sync(messages: list[dict]) -> str:
                 "model": AI_MODEL,
                 "messages": messages,
                 "stream": False,
+                "reasoning": {"enabled": True},
             },
         )
 
