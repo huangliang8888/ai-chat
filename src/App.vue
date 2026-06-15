@@ -107,6 +107,14 @@ window.__chatSessions = sessions
 window.__chatSaveSessions = saveSessions
 
 onMounted(async () => {
+  // If Supabase is not configured, skip login and go directly to chat
+  if (!supabase) {
+    checking.value = false
+    user.value = 'no-auth'
+    loadSessions()
+    return
+  }
+
   // Check current session
   const { data: { session } } = await supabase.auth.getSession()
   user.value = session?.user ?? null
