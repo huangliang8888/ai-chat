@@ -1,9 +1,5 @@
 <template>
-  <div v-if="checking" class="app loading">
-    <div class="loading-spinner"></div>
-  </div>
-  <LoginPage v-else-if="!user" @login="handleLogin" />
-  <div v-else class="app">
+  <div class="app">
     <Sidebar
       :sessions="sessions"
       :current-session-id="currentSessionId"
@@ -16,7 +12,10 @@
     <ChatView
       :session-id="currentSessionId"
       :sidebar-open="sidebarOpen"
+      :user="user"
       @toggle-sidebar="sidebarOpen = !sidebarOpen"
+      @login="loginWithGoogle"
+      @logout="logout"
     />
   </div>
 </template>
@@ -25,11 +24,9 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import Sidebar from './components/Sidebar.vue'
 import ChatView from './components/ChatView.vue'
-import LoginPage from './components/LoginPage.vue'
 import { supabase } from './services/supabase.js'
 
 const user = ref(null)
-const checking = ref(true)
 const sessions = ref([])
 const currentSessionId = ref(null)
 const sidebarOpen = ref(true)
@@ -98,8 +95,20 @@ function deleteSession(id) {
   }
 }
 
-function handleLogin() {
-  // OAuth redirect handled by Supabase, auth state change listener will update user
+async function loginWithGoogle() {
+  if (!supabase) return
+  await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: window.location.origin
+    }
+  })
+}
+
+async function logout() {
+  if (!supabase) return
+  await supabase.auth.signOut()
+  user.value = null
 }
 
 // Expose for ChatView to update messages
@@ -107,29 +116,15 @@ window.__chatSessions = sessions
 window.__chatSaveSessions = saveSessions
 
 onMounted(async () => {
-  // If Supabase is not configured, skip login and go directly to chat
-  if (!supabase) {
-    checking.value = false
-    user.value = 'no-auth'
-    loadSessions()
-    return
-  }
+  loadSessions()
 
-  // Check current session
+  if (!supabase) return
+
   const { data: { session } } = await supabase.auth.getSession()
   user.value = session?.user ?? null
-  checking.value = false
 
-  if (user.value) {
-    loadSessions()
-  }
-
-  // Listen for auth state changes (handles OAuth callback)
   const { data } = supabase.auth.onAuthStateChange((_event, session) => {
     user.value = session?.user ?? null
-    if (user.value) {
-      loadSessions()
-    }
   })
   authSubscription = data.subscription
 })
@@ -147,23 +142,5 @@ onUnmounted(() => {
   height: 100vh;
   width: 100vw;
   overflow: hidden;
-}
-
-.app.loading {
-  align-items: center;
-  justify-content: center;
-}
-
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--border-color);
-  border-top-color: var(--text-accent);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 </style>
